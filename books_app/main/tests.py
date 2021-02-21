@@ -4,7 +4,7 @@ import unittest
 from datetime import date
 
 from books_app import app, db, bcrypt
-from books_app.models import Book, Author, User, Audience
+from books_app.models import Book, Author, User, Audience, Genre
 """
 Run these tests with the command:
 python -m unittest books_app.main.tests
@@ -217,36 +217,83 @@ class MainTests(unittest.TestCase):
 
     def test_create_author(self):
         """Test creating an author."""
-        # TODO: Make a POST request to the /create_author route
+        # Make a POST request to the /create_author route
 
-        # TODO: Verify that the author was updated in the database
-        pass
+        # Set up
+        create_books()
+        create_user()
+        login(self.app, 'me1', 'password')
+
+        # Make POST request with data
+        post_data = {
+            'name': "Mark Twain",
+            'biography': 'Mark Twain wrote some book'
+        }
+        self.app.post('/create_author', data=post_data)
+
+        # Verify that the author was updated in the database
+        created_author = Author.query.filter_by(name='Mark Twain').one()
+        self.assertIsNotNone(created_author)
+        self.assertEqual(created_author.biography,
+                         'Mark Twain wrote some book')
 
     def test_create_genre(self):
-        # TODO: Make a POST request to the /create_genre route,
+        # Make a POST request to the /create_genre route,
+        # Set up
+        create_books()
+        create_user()
+        login(self.app, 'me1', 'password')
 
-        # TODO: Verify that the genre was updated in the database
-        pass
+        # Make POST request with data
+        post_data = {'name': "Non Fiction"}
+        self.app.post('/create_genre', data=post_data)
+
+        # Verify that the genre was updated in the database
+        created_genre = Genre.query.filter_by(name='Non Fiction').one()
+        self.assertIsNotNone(created_genre)
 
     def test_profile_page(self):
-        # TODO: Make a GET request to the /profile/1 route
+        # Make a GET request to the /profile/me1 route
+        create_user()
+        login(self.app, 'me1', 'password')
+        response = self.app.get('/profile/me1')
 
-        # TODO: Verify that the response shows the appropriate user info
-        pass
+        self.assertEqual(response.status_code, 200)
+        response_text = response.get_data(as_text=True)
+
+        # Verify that the response shows the appropriate user info
+        self.assertIn('You are logged in as me1', response_text)
 
     def test_favorite_book(self):
-        # TODO: Login as the user me1
+        # Login as the user me1
+        create_books()
+        create_user()
+        login(self.app, 'me1', 'password')
 
-        # TODO: Make a POST request to the /favorite/1 route
+        # Make a POST request to the /favorite/1 route
+        self.app.post('/favorite/1')
 
-        # TODO: Verify that the book with id 1 was added to the user's favorites
-        pass
+        # Verify that the book with id 1 was added to the user's favorites
+        newUser = User.query.filter_by(username='me1').one()
+        book = Book.query.filter_by(id=1).one()
+        self.assertIsNotNone(newUser)
+        self.assertIsNotNone(newUser.favorite_books)
+        self.assertIn(book, newUser.favorite_books)
 
     def test_unfavorite_book(self):
-        # TODO: Login as the user me1, and add book with id 1 to me1's favorites
+        # Login as the user me1, and add book with id 1 to me1's favorites
+        create_books()
+        create_user()
+        login(self.app, 'me1', 'password')
 
-        # TODO: Make a POST request to the /unfavorite/1 route
+        self.app.post('/favorite/1')
 
-        # TODO: Verify that the book with id 1 was removed from the user's
+        # Make a POST request to the /unfavorite/1 route
+        self.app.post('/unfavorite/1')
+
+        # Verify that the book with id 1 was removed from the user's
         # favorites
-        pass
+        newUser = User.query.filter_by(username='me1').one()
+        book = Book.query.filter_by(id=1).one()
+        self.assertIsNotNone(newUser)
+        self.assertNotIn(book, newUser.favorite_books)
