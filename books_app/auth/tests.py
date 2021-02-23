@@ -98,7 +98,7 @@ class AuthTests(TestCase):
     def test_login_correct_password(self):
         # - Create a user
         # - Make a POST request to /login, sending the created username & password
-        # - Check that the user's name is now displayed on the homepage
+        # - Check that the "login" button is not displayed on the homepage
 
         create_user()
 
@@ -106,7 +106,7 @@ class AuthTests(TestCase):
 
         response_text = response.get_data(as_text=True)
 
-        self.assertIn("me1", response_text)
+        self.assertNotIn("login", response_text)
 
     def test_login_nonexistent_user(self):
         # - Make a POST request to /login, sending a username & password
